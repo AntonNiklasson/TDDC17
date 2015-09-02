@@ -1,13 +1,12 @@
 package tddc17;
 
 
-import aima.core.environment.liuvacuum.*;
 import aima.core.agent.Action;
 import aima.core.agent.AgentProgram;
 import aima.core.agent.Percept;
 import aima.core.agent.impl.*;
-
-import java.util.Random;
+import aima.core.environment.liuvacuum.*;
+import java.util.*;
 
 class MyAgentState {
     public int[][] world = new int[30][30];
@@ -89,35 +88,47 @@ class MyAgentState {
 
 class MyAgentProgram implements AgentProgram {
 
-    private int initialRandomActions = 0;
+    private int initialRandomActions = 10;
     private Random random_generator = new Random();
-
-    private static final int PHASE_CORNERS = 0;
-    private static final int PHASE_SNAKING = 1;
-    private static final int PHASE_GOINGHOME = 2;
-
-    private int phase = PHASE_CORNERS;
 
     // Here you can define your variables!
     public int iterationCounter = 100;
     public MyAgentState state = new MyAgentState();
 
-    // moves the Agent to a random start position
-    // uses percepts to update the Agent position - only the position, other percepts are ignored
-    // returns a random action
+    private static final int PHASE_CORNERS = 0;
+    private static final int PHASE_SNAKING = 1;
+    private static final int PHASE_GOINGHOME = 2;
+    private int phase = PHASE_CORNERS;
+
+    // A queue of commands to perform over multiple steps.
+    private List<Integer> commandQueue = new LinkedList<Integer>();
+
+    // This is set to true as soon as the agent leaves the home cell.
+    private boolean hasLeftHome = false;
+
+    /*
+    * Moves the Agent to a random start position.
+    * Uses percepts to update the Agent position - only the position, other percepts are ignored
+    * Returns: a random action
+    */
     private Action moveToRandomStartPosition(DynamicPercept percept) {
-        int action = random_generator.nextInt(6);
         initialRandomActions--;
         state.updatePosition(percept);
+
+        int action = random_generator.nextInt(6);
+
         if (action == 0) {
             state.agent_direction = ((state.agent_direction - 1) % 4);
+
             if (state.agent_direction < 0)
                 state.agent_direction += 4;
             state.agent_last_action = state.ACTION_TURN_LEFT;
+
             return LIUVacuumEnvironment.ACTION_TURN_LEFT;
         } else if (action == 1) {
             state.agent_direction = ((state.agent_direction + 1) % 4);
             state.agent_last_action = state.ACTION_TURN_RIGHT;
+
             return LIUVacuumEnvironment.ACTION_TURN_RIGHT;
         }
         state.agent_last_action = state.ACTION_MOVE_FORWARD;
@@ -128,40 +139,90 @@ class MyAgentProgram implements AgentProgram {
     @Override
     public Action execute(Percept percept) {
 
-        // DO NOT REMOVE this if condition!!!
-        if (initialRandomActions > 0) {
-            return moveToRandomStartPosition((DynamicPercept) percept);
-        } else if (initialRandomActions == 0) {
-            // process percept for the last step of the initial random actions
-            initialRandomActions--;
-            state.updatePosition((DynamicPercept) percept);
-            System.out.println("Processing percepts after the last execution of moveToRandomStartPosition()");
-            state.agent_last_action = state.ACTION_SUCK;
+        Action action;
+        boolean debug = false;
 
-            return LIUVacuumEnvironment.ACTION_SUCK;
-        }
-
-        // This example agent program will update the internal agent state while only moving forward.
-        // START HERE - code below should be modified!
-
-        System.out.println("x=" + state.agent_x_position);
-        System.out.println("y=" + state.agent_y_position);
-        System.out.println("dir=" + state.agent_direction);
-
-
-        iterationCounter--;
-
-        if (iterationCounter == 0)
+        if(iterationCounter == 0) {
             return NoOpAction.NO_OP;
 
-        DynamicPercept p = (DynamicPercept) percept;
-        Boolean bump = (Boolean) p.getAttribute("bump");
-        Boolean home = (Boolean) p.getAttribute("home");
-        Boolean dirt = (Boolean) p.getAttribute("dirt");
-        System.out.println("percept: " + p);
+        // Start out by moving to a random position.
+        } else if(initialRandomActions > 0) {
+            return moveToRandomStartPosition((DynamicPercept) percept);
 
-        // State update based on the percept value and the last action
-        state.updatePosition((DynamicPercept) percept);
+        // Perform some action during the last random step.
+        } else if(initialRandomActions == 0) {
+            initialRandomActions--;
+            state.updatePosition((DynamicPercept) percept);
+
+            action = LIUVacuumEnvironment.ACTION_SUCK;
+
+        // The random moves are performed. Start exploring the world.
+        } else {
+            iterationCounter--;
+
+            DynamicPercept p = (DynamicPercept) percept;
+            Boolean bump = (Boolean) p.getAttribute("bump");
+            Boolean home = (Boolean) p.getAttribute("home");
+            Boolean dirt = (Boolean) p.getAttribute("dirt");
+            System.out.println("percept: " + p);
+
+            state.updatePosition((DynamicPercept) percept);
+
+            // Print any relevant debug information.
+            if(debug) {
+                System.out.println("x=" + state.agent_x_position);
+                System.out.println("y=" + state.agent_y_position);
+                System.out.println("dir=" + state.agent_direction);
+
+                state.printWorldDebug();
+            }
+
+            // Memorize walls and dirt.
+            this.memorizeWorld(bump, dirt);
+
+            // Make sure we eat dirt if we are standing on top of it.
+            if (dirt) {
+                action = LIUVacuumEnvironment.ACTION_SUCK;
+
+                // If no dirt was found, we keep on moving according the current phase.
+            } else {
+                switch (this.phase) {
+
+                    // Move right as far as possible, then down as far as possible, then left as far as possible.
+                    case PHASE_CORNERS:
+                        action = handleCornerPhaseStep(bump);
+                        break;
+
+                    // Move one row up, then as far right as possible. Move on row up, then as far left as possible. Repeat.
+                    case PHASE_SNAKING:
+                        action = handleSnakingPhaseStep(bump);
+                        break;
+
+                    // Go home as quick as possible.
+                    case PHASE_GOINGHOME:
+                        action = handleGoingHomePhaseStep(home);
+                        break;
+
+                    // This should never occur.
+                    default:
+                        action = NoOpAction.NO_OP;
+                        break;
+                }
+            }
+        }
+
+        this.preprocessAction(action);
+
+        return action;
+    }
+
+    /***
+     * Memorize walls and dirt at the current position.
+     * @param bump
+     * @param dirt
+     */
+    private void memorizeWorld(boolean bump, boolean dirt) {
+        // Store walls in the agent's memory.
         if (bump) {
             switch (state.agent_direction) {
                 case MyAgentState.NORTH:
@@ -178,50 +239,93 @@ class MyAgentProgram implements AgentProgram {
                     break;
             }
         }
+
+        // Store dist position in the agent's memory.
         if (dirt)
             state.updateWorld(state.agent_x_position, state.agent_y_position, state.DIRT);
         else
             state.updateWorld(state.agent_x_position, state.agent_y_position, state.CLEAR);
-
-//	    state.printWorldDebug();
-
-        if (dirt) {
-            state.agent_last_action = state.ACTION_SUCK;
-            return LIUVacuumEnvironment.ACTION_SUCK;
-        } else {
-            switch (this.phase) {
-                case PHASE_CORNERS:
-                    return handleCornerPhaseStep(bump);
-                case PHASE_SNAKING:
-                    return handleSnakingPhaseStep(bump);
-                case PHASE_GOINGHOME:
-                    return handleGoingHomePhaseStep(home);
-                default:
-                    return NoOpAction.NO_OP;
-            }
-        }
     }
 
-    private Action handleCornerPhaseStep(boolean bump) {
-        if(state.agent_direction == state.WEST && bump) {
-            this.phase = PHASE_SNAKING;
+    /***
+     * Perform some action-dependant tasks before returning the action.
+     * @param action
+     */
+    private void preprocessAction(Action action) {
+        if(action == LIUVacuumEnvironment.ACTION_TURN_RIGHT) {
             state.agent_last_action = state.ACTION_TURN_RIGHT;
-            return LIUVacuumEnvironment.ACTION_TURN_RIGHT;
-        } else if(state.agent_direction == state.EAST && !bump) {
+            state.agent_direction = (state.agent_direction + 1) % 4;
+
+        } else if(action == LIUVacuumEnvironment.ACTION_TURN_LEFT) {
+            state.agent_last_action = state.ACTION_TURN_LEFT;
+            state.agent_direction = (state.agent_direction - 1) % 4;
+
+        } else if(action == LIUVacuumEnvironment.ACTION_MOVE_FORWARD) {
             state.agent_last_action = state.ACTION_MOVE_FORWARD;
-            return LIUVacuumEnvironment.ACTION_MOVE_FORWARD;
-        } else {
-            state.agent_last_action = state.ACTION_TURN_RIGHT;
-            return LIUVacuumEnvironment.ACTION_TURN_RIGHT;
+
+        } else if(action == LIUVacuumEnvironment.ACTION_SUCK) {
+            state.agent_last_action = state.ACTION_SUCK;
         }
     }
 
+    /***
+     * Find the two bottom corners.
+     * @param bump
+     * @return
+     */
+    private Action handleCornerPhaseStep(boolean bump) {
+
+        System.out.println("Corner Phase");
+
+        // Facing east: move forwards then turn right at any wall.
+        if(state.agent_direction == state.EAST && !bump) {
+            this.hasLeftHome = true;
+            return LIUVacuumEnvironment.ACTION_MOVE_FORWARD;
+
+        // Facing south: move forwards then turn right at any wall.
+        } else if(state.agent_direction == state.SOUTH && this.hasLeftHome) {
+            if(bump) {
+                return LIUVacuumEnvironment.ACTION_TURN_RIGHT;
+            }
+
+            return LIUVacuumEnvironment.ACTION_MOVE_FORWARD;
+
+        // Facing west: move forwards then turn right at any wall and start snaking.
+        } else if(state.agent_direction == state.WEST && this.hasLeftHome) {
+            if (bump) {
+                this.phase = PHASE_SNAKING;
+                return LIUVacuumEnvironment.ACTION_TURN_RIGHT;
+            }
+
+            return LIUVacuumEnvironment.ACTION_MOVE_FORWARD;
+        }
+
+        // If we are still in the home cell, but not yet facing east. This can definitely be optimized.
+        return LIUVacuumEnvironment.ACTION_TURN_RIGHT;
+    }
+
+    /***
+     * Move upwards and from side to side like a snake.
+     * @param bump
+     * @return
+     */
     private Action handleSnakingPhaseStep(boolean bump) {
+
+        System.out.println("Snake Phase");
+
         state.agent_last_action = state.ACTION_MOVE_FORWARD;
         return LIUVacuumEnvironment.ACTION_MOVE_FORWARD;
     }
 
+    /***
+     * Move the home cell as quick as possible.
+     * @param home
+     * @return
+     */
     private Action handleGoingHomePhaseStep(boolean home) {
+
+        System.out.println("Homecoming Phase");
+
         state.agent_last_action = state.ACTION_MOVE_FORWARD;
         return LIUVacuumEnvironment.ACTION_MOVE_FORWARD;
     }
