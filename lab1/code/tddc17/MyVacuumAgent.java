@@ -24,6 +24,9 @@ class MyAgentState {
 
     public int agent_x_position = 1;
     public int agent_y_position = 1;
+    public int agent_previous_x_position = 1;
+    public int agent_previous_y_position = 1;
+
     public int agent_last_action = ACTION_NONE;
 
     public static final int NORTH = 0;
@@ -45,6 +48,9 @@ class MyAgentState {
         Boolean bump = (Boolean) p.getAttribute("bump");
 
         if (agent_last_action == ACTION_MOVE_FORWARD && !bump) {
+            agent_previous_y_position = agent_y_position;
+            agent_previous_x_position = agent_x_position;
+
             switch (agent_direction) {
                 case MyAgentState.NORTH:
                     agent_y_position--;
@@ -92,7 +98,7 @@ class MyAgentProgram implements AgentProgram {
     private Random random_generator = new Random();
 
     // Here you can define your variables!
-    public int iterationCounter = 100;
+    public int iterationCounter = 200;
     public MyAgentState state = new MyAgentState();
 
     private static final int PHASE_CORNERS = 0;
@@ -101,7 +107,7 @@ class MyAgentProgram implements AgentProgram {
     private int phase = PHASE_CORNERS;
 
     // A queue of commands to perform over multiple steps.
-    private List<Integer> commandQueue = new LinkedList<Integer>();
+    private Queue<Action> commandQueue = new LinkedList<Action>();
 
     // This is set to true as soon as the agent leaves the home cell.
     private boolean hasLeftHome = false;
@@ -140,7 +146,7 @@ class MyAgentProgram implements AgentProgram {
     public Action execute(Percept percept) {
 
         Action action;
-        boolean debug = false;
+        boolean debug = true;
 
         if(iterationCounter == 0) {
             return NoOpAction.NO_OP;
@@ -170,8 +176,10 @@ class MyAgentProgram implements AgentProgram {
 
             // Print any relevant debug information.
             if(debug) {
-                System.out.println("x=" + state.agent_x_position);
-                System.out.println("y=" + state.agent_y_position);
+                System.out.println("x = " + state.agent_x_position);
+                System.out.println("y = " + state.agent_y_position);
+                System.out.println("x_prev = " + state.agent_previous_x_position);
+                System.out.println("y_prev = " + state.agent_previous_y_position);
                 System.out.println("dir=" + state.agent_direction);
 
                 state.printWorldDebug();
@@ -186,27 +194,34 @@ class MyAgentProgram implements AgentProgram {
 
                 // If no dirt was found, we keep on moving according the current phase.
             } else {
-                switch (this.phase) {
 
-                    // Move right as far as possible, then down as far as possible, then left as far as possible.
-                    case PHASE_CORNERS:
-                        action = handleCornerPhaseStep(bump);
-                        break;
+                // Are there any commands already queued?
+                if(this.commandQueue.size() > 0) {
+                    action = this.commandQueue.remove();
+                    System.out.println("Reading command from queue: " + action);
+                } else {
+                    switch (this.phase) {
 
-                    // Move one row up, then as far right as possible. Move on row up, then as far left as possible. Repeat.
-                    case PHASE_SNAKING:
-                        action = handleSnakingPhaseStep(bump);
-                        break;
+                        // Move right as far as possible, then down as far as possible, then left as far as possible.
+                        case PHASE_CORNERS:
+                            action = handleCornerPhaseStep(bump);
+                            break;
 
-                    // Go home as quick as possible.
-                    case PHASE_GOINGHOME:
-                        action = handleGoingHomePhaseStep(home);
-                        break;
+                        // Move one row up, then as far right as possible. Move on row up, then as far left as possible. Repeat.
+                        case PHASE_SNAKING:
+                            action = handleSnakingPhaseStep(bump);
+                            break;
 
-                    // This should never occur.
-                    default:
-                        action = NoOpAction.NO_OP;
-                        break;
+                        // Go home as quick as possible.
+                        case PHASE_GOINGHOME:
+                            action = handleGoingHomePhaseStep(home);
+                            break;
+
+                        // This should never occur.
+                        default:
+                            action = NoOpAction.NO_OP;
+                            break;
+                    }
                 }
             }
         }
@@ -278,9 +293,15 @@ class MyAgentProgram implements AgentProgram {
         System.out.println("Corner Phase");
 
         // Facing east: move forwards then turn right at any wall.
-        if(state.agent_direction == state.EAST && !bump) {
+        if(state.agent_direction == state.EAST) {
             this.hasLeftHome = true;
-            return LIUVacuumEnvironment.ACTION_MOVE_FORWARD;
+
+            if(!bump) {
+                return LIUVacuumEnvironment.ACTION_MOVE_FORWARD;
+            }
+
+            this.commandQueue.add(LIUVacuumEnvironment.ACTION_MOVE_FORWARD);
+            return LIUVacuumEnvironment.ACTION_TURN_RIGHT;
 
         // Facing south: move forwards then turn right at any wall.
         } else if(state.agent_direction == state.SOUTH && this.hasLeftHome) {
@@ -294,7 +315,6 @@ class MyAgentProgram implements AgentProgram {
         } else if(state.agent_direction == state.WEST && this.hasLeftHome) {
             if (bump) {
                 this.phase = PHASE_SNAKING;
-                return LIUVacuumEnvironment.ACTION_TURN_RIGHT;
             }
 
             return LIUVacuumEnvironment.ACTION_MOVE_FORWARD;
@@ -313,7 +333,28 @@ class MyAgentProgram implements AgentProgram {
 
         System.out.println("Snake Phase");
 
-        state.agent_last_action = state.ACTION_MOVE_FORWARD;
+        // If the agent failed to move the previous round we know we are done snaking.
+        if(state.agent_x_position == state.agent_previous_x_position && state.agent_y_position == state.agent_previous_y_position) {
+            this.phase = PHASE_GOINGHOME;
+            return LIUVacuumEnvironment.ACTION_MOVE_FORWARD;
+
+        // Turn around 180 deg to the left.
+        } else if(state.agent_direction == state.EAST && bump) {
+            System.out.println("Left turn!");
+            this.commandQueue.add(LIUVacuumEnvironment.ACTION_MOVE_FORWARD);
+            this.commandQueue.add(LIUVacuumEnvironment.ACTION_TURN_LEFT);
+            return LIUVacuumEnvironment.ACTION_TURN_LEFT;
+
+        // Turn around 180 deg to the right.
+        } else if(state.agent_direction == state.WEST && bump) {
+            System.out.println("Right turn!");
+            this.commandQueue.add(LIUVacuumEnvironment.ACTION_MOVE_FORWARD);
+            this.commandQueue.add(LIUVacuumEnvironment.ACTION_TURN_RIGHT);
+            return LIUVacuumEnvironment.ACTION_TURN_RIGHT;
+        }
+
+        // Move forward in any other case.
+        System.out.println("Move forward!");
         return LIUVacuumEnvironment.ACTION_MOVE_FORWARD;
     }
 
@@ -324,10 +365,9 @@ class MyAgentProgram implements AgentProgram {
      */
     private Action handleGoingHomePhaseStep(boolean home) {
 
-        System.out.println("Homecoming Phase");
+        System.out.println("Going Home Phase");
 
-        state.agent_last_action = state.ACTION_MOVE_FORWARD;
-        return LIUVacuumEnvironment.ACTION_MOVE_FORWARD;
+        return NoOpAction.NO_OP;
     }
 }
 
