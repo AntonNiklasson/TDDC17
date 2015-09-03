@@ -6,6 +6,8 @@ import aima.core.agent.AgentProgram;
 import aima.core.agent.Percept;
 import aima.core.agent.impl.*;
 import aima.core.environment.liuvacuum.*;
+
+import java.lang.System;
 import java.util.*;
 
 class MyAgentState {
@@ -65,6 +67,10 @@ class MyAgentState {
                     agent_x_position--;
                     break;
             }
+        } else {
+            System.out.println("-------------------------");
+            System.out.println("Not updating the agents position!");
+            System.out.println("-------------------------");
         }
 
     }
@@ -98,7 +104,7 @@ class MyAgentProgram implements AgentProgram {
     private Random random_generator = new Random();
 
     // Here you can define your variables!
-    public int iterationCounter = 200;
+    public int iterationCounter = 1000;
     public MyAgentState state = new MyAgentState();
 
     private static final int PHASE_CORNERS = 0;
@@ -170,15 +176,17 @@ class MyAgentProgram implements AgentProgram {
             Boolean bump = (Boolean) p.getAttribute("bump");
             Boolean home = (Boolean) p.getAttribute("home");
             Boolean dirt = (Boolean) p.getAttribute("dirt");
-            System.out.println("percept: " + p);
 
             state.updatePosition((DynamicPercept) percept);
 
             // Print any relevant debug information.
             if(debug) {
+                System.out.println();
+                System.out.println("--------------------------------------------");
                 System.out.println("x = " + state.agent_x_position);
-                System.out.println("y = " + state.agent_y_position);
                 System.out.println("x_prev = " + state.agent_previous_x_position);
+                System.out.println();
+                System.out.println("y = " + state.agent_y_position);
                 System.out.println("y_prev = " + state.agent_previous_y_position);
                 System.out.println("dir=" + state.agent_direction);
 
@@ -192,13 +200,15 @@ class MyAgentProgram implements AgentProgram {
             if (dirt) {
                 action = LIUVacuumEnvironment.ACTION_SUCK;
 
-                // If no dirt was found, we keep on moving according the current phase.
+            // If no dirt was found, we keep on moving according the current phase.
             } else {
 
-                // Are there any commands already queued?
+                System.out.println("Current command queue size: " + this.commandQueue.size());
+
+                // Should we perform some queued command?
                 if(this.commandQueue.size() > 0) {
                     action = this.commandQueue.remove();
-                    System.out.println("Reading command from queue: " + action);
+                    System.out.println("Queued command: " + action);
                 } else {
                     switch (this.phase) {
 
@@ -269,11 +279,17 @@ class MyAgentProgram implements AgentProgram {
     private void preprocessAction(Action action) {
         if(action == LIUVacuumEnvironment.ACTION_TURN_RIGHT) {
             state.agent_last_action = state.ACTION_TURN_RIGHT;
-            state.agent_direction = (state.agent_direction + 1) % 4;
+
+            state.agent_direction = state.agent_direction + 1;
+            if(state.agent_direction == 4) state.agent_direction = 0;
+            else if(state.agent_direction == -1) state.agent_direction = 3;
 
         } else if(action == LIUVacuumEnvironment.ACTION_TURN_LEFT) {
             state.agent_last_action = state.ACTION_TURN_LEFT;
-            state.agent_direction = (state.agent_direction - 1) % 4;
+
+            state.agent_direction = state.agent_direction - 1;
+            if(state.agent_direction == 4) state.agent_direction = 0;
+            else if(state.agent_direction == -1) state.agent_direction = 3;
 
         } else if(action == LIUVacuumEnvironment.ACTION_MOVE_FORWARD) {
             state.agent_last_action = state.ACTION_MOVE_FORWARD;
