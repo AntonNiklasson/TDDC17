@@ -1,16 +1,22 @@
 \documentclass{article}
 
+\usepackage[parfill]{parskip}
+
 \begin{document}
 
 \title{TDDC17: Lab 1}
 \author{Henning Hall \& Anton Niklasson}
 \maketitle
 
-Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod
-tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam,
-quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo
-consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse
-cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non
-proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+\section{Strategy}
+
+We decided to start out by letting the agent find two corners. It starts out by moving right as far as possible.
+Then it turns to the right and moves downwards are far as possible. This gives us the first corner.
+From there we turn right once again and move left as far as possible. The agent is now located in the bottom left corner of the world.
+
+We initiate a phase that we call \textit{snaking}. The agent moves from side to side scanning each row for dirt to clean up.
+
+The agent snakes its way up to one of the top corners and from there it starts its journey back home. Navigating back home is quite an easy task since we know
+were we are, and were we would like to be.
 
 \end{document}
