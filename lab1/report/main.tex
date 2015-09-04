@@ -8,15 +8,27 @@
 \author{Henning Hall \& Anton Niklasson}
 \maketitle
 
-\section{Strategy}
+\section*{Our Solution}
+We came up with a solution that concists of three phases:
 
-We decided to start out by letting the agent find two corners. It starts out by moving right as far as possible.
-Then it turns to the right and moves downwards are far as possible. This gives us the first corner.
-From there we turn right once again and move left as far as possible. The agent is now located in the bottom left corner of the world.
+\begin{enumerate}
+	\item Locating corners
+	\item Traversing the world
+	\item Go back home
+\end{enumerate}
 
-We initiate a phase that we call \textit{snaking}. The agent moves from side to side scanning each row for dirt to clean up.
+The goal of the first phase is to establish some sense of the environment and positioning the agent in a good spot before moving into the traversing.
 
-The agent snakes its way up to one of the top corners and from there it starts its journey back home. Navigating back home is quite an easy task since we know
-were we are, and were we would like to be.
+The first step of the first phase is to move east and south as far as possible. This gives us the first corner. We then move west as far as possible to find the other bottom corner. From this position we initialize the second phase.
+
+The traversing phase moves the agent north while fully scanning each row. This will eventually place us at the top of the world with every bit of dirt cleaned up.
+
+From there all we have to do is go back home. The agent knows its current position and it also remembers the home position.
+
+\section*{Optimizations}
+
+Our solution is probably far from perfect. First of all, by moving the agent around like this we rely heavily on turning around on the spot. This has a cost to it, and that it something that we probably could take more into consideration.
+
+Another point of optimization is to make sure we do not visit a cell more than once. As of right now the agent checks quite a few cells multiple times.
 
 \end{document}
