@@ -43,13 +43,15 @@ public class CustomGraphSearch implements SearchObject {
 		// Implement this!
 		System.out.println("Implement CustomGraphSearch.java!");
 		
-		GridPos currentState = startState; 
 		ArrayList<GridPos> childStates; 
 		
-		while (true){
+		int i = 0; 
+		SearchNode currentNode = null;
+		
+		while (i < 50000){
 			
 			// ta första eller sista noden 
-			SearchNode currentNode = frontier.removeFirst();
+			currentNode = frontier.removeFirst();
 			
 			
 			// kolla om det är målet
@@ -74,10 +76,11 @@ public class CustomGraphSearch implements SearchObject {
 			explored.add(currentNode);
 		
 			
-			
-			
+			i++;
 			
 		}
+		
+		 path = currentNode.getPathFromRoot();
 		
 		
 		/* Some hints:
