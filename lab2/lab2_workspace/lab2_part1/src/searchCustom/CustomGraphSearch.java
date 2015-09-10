@@ -20,9 +20,9 @@ public class CustomGraphSearch implements SearchObject {
 	/**
 	 * The constructor tells graph search whether it should insert nodes to front or back of the frontier 
 	 */
-    public CustomGraphSearch(boolean bInsertFront) {
+	public CustomGraphSearch(boolean bInsertFront) {
 		insertFront = bInsertFront;
-    }
+	}
 
 	/**
 	 * Implements "graph search", which is the foundation of many search algorithms
@@ -39,50 +39,39 @@ public class CustomGraphSearch implements SearchObject {
 
 		// Path will be empty until we find the goal.
 		path = new ArrayList<SearchNode>();
-		
+
 		// Implement this!
 		System.out.println("Implement CustomGraphSearch.java!");
-		
+
 		ArrayList<GridPos> childStates; 
-		
-		int i = 0; 
-		SearchNode currentNode = null;
-		
-		while (i < 50000){
-			
-			// ta första eller sista noden 
-			currentNode = frontier.removeFirst();
-			
-			
-			// kolla om det är målet
-			if (p.isGoalState(currentNode.getState())) break; 
-			
-			
+
+		SearchNode currentNode = frontier.removeFirst();
+
+		while (!p.isGoalState(currentNode.getState())){
+
 			// checka allt runt omkring
 			childStates = p.getReachableStatesFrom(currentNode.getState());
-			
-			
-			
-			
+
 			// lägg till noder i kön beroende på insertBefore
 			for (GridPos state : childStates) {
 				SearchNode childNode = new SearchNode(state, currentNode);
-				if (insertFront) frontier.addNodeToFront(childNode);
-				else frontier.addNodeToBack(childNode);
+				if (!explored.contains(childNode)){
+					if (insertFront) frontier.addNodeToFront(childNode);
+					else frontier.addNodeToBack(childNode);
+				}
 			}
-			
-			
-			//lägg till current node til lexplored
+
+			//lägg till current node till explored
 			explored.add(currentNode);
-		
 			
-			i++;
-			
+			// ta första eller sista noden 
+			currentNode = frontier.removeFirst();
 		}
 		
-		 path = currentNode.getPathFromRoot();
+		path = currentNode.getPathFromRoot();				
+
 		
-		
+
 		/* Some hints:
 		 * -Read early part of chapter 3 in the book!
 		 * -You are free to change anything how you wish as long as the program runs, but some structure is given to help you.
