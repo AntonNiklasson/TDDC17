@@ -40,19 +40,17 @@ public class CustomGraphSearch implements SearchObject {
 		// Path will be empty until we find the goal.
 		path = new ArrayList<SearchNode>();
 
-		// Implement this!
-		System.out.println("Implement CustomGraphSearch.java!");
-
 		ArrayList<GridPos> childStates; 
 
 		SearchNode currentNode = frontier.removeFirst();
 
 		while (!p.isGoalState(currentNode.getState())){
 
-			// checka allt runt omkring
+			// checks all states next to the current node
 			childStates = p.getReachableStatesFrom(currentNode.getState());
 
-			// lägg till noder i kön beroende på insertBefore
+			// adds nodes next to current node to the frontier to the front or 
+			// back depending on the value of insertFront
 			for (GridPos state : childStates) {
 				SearchNode childNode = new SearchNode(state, currentNode);
 				if (!explored.contains(childNode)){
@@ -61,16 +59,17 @@ public class CustomGraphSearch implements SearchObject {
 				}
 			}
 
-			//lägg till current node till explored
+			// adds the current node to set of explored nodes
 			explored.add(currentNode);
 			
-			// ta första eller sista noden 
+			// replaces current node with the first node of the frontier. 
 			currentNode = frontier.removeFirst();
 		}
 		
+		// When the goal is found, the path to be returned can be found by: path = node.getPathFromRoot();
 		path = currentNode.getPathFromRoot();				
 
-		
+		return path;
 
 		/* Some hints:
 		 * -Read early part of chapter 3 in the book!
@@ -98,7 +97,6 @@ public class CustomGraphSearch implements SearchObject {
 		 *  When the goal is found, the path to be returned can be found by: path = node.getPathFromRoot();
 		 */
 		/* Note: Returning an empty path signals that no path exists */
-		return path;
 	}
 
 	/*
