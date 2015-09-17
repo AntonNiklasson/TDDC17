@@ -121,8 +121,11 @@ It is optimal if the step cost is the same to each level of nodes.
 \textbf{Bidirectional}
 The search will be complete if both sides is using breadth first search and optimal if the step cost is the same. 
 
-\section*{Assume that you had to go back and do lab 1 once more, but this time with obstacles.\\Remember that the agent did not have perfect knowledge of the environment but had to explore it incrementally.\\Could you still use the search algorithms you have learned to guide the agent's execution?\\What would you search for?\\Give an example.}
+\section*{Assume that you had to go back and do lab 1 once more, but this time with obstacles.\\Remember that the agent did not have perfect knowledge of the
+environment but had to explore it incrementally.\\Could you still use the search algorithms you have learned to guide the agent's execution?\\What would you search for?}
 
-Answer.
+If we were to solve lab 1 again with obstacles we would try to traverse the world in a depth first manner. We would not really search for anything specific,
+the goal would be to keep on traversing until we do not have any unvisited nodes left. We would of course suck up any dust that we find along the way.
+When the depth-first traversal is done we transition into an A* search to find our way back home.
 
 \end{document}
