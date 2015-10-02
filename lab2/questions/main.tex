@@ -1,6 +1,7 @@
 \documentclass{article}
 
 \usepackage[parfill]{parskip}
+\usepackage[swedish]{babel}
 \usepackage{graphicx}
 
 \overfullrule=2cm
@@ -52,11 +53,11 @@ Below is a sketch of the graph including the cost to move between the nodes:
 
 \includegraphics[scale=0.1]{graph}
 
-We start our journey at Kårallen which we assigned the letter A. Our apartment is the node F. We chose to look at A*, DPS and BFS.
+We start our journey at Karallen which we assigned the letter A. Our apartment is the node F. We chose to look at A*, DFS and BFS.
 
 \subsection*{A* Search}
 
-The table below represents the bee line between all the nodes in graph. This table is utilized in our A star heuristic.
+The table below represents the straight line distance between all the nodes in graph. This table is utilized in our A* heuristic.
 
 \begin{center}
 	\begin{table}[h]
@@ -82,9 +83,11 @@ The table below represents the bee line between all the nodes in graph. This tab
 
 So, the heursitic \textit{h} is the distance to the goal, and the cost function \textit{g} is the total cost from the start.
 
-Memory usage of the A* algortihm is pretty high. It grows exponentially with the problem which is not ideal.
+Memory usage of the A* algorithm is pretty high. It grows exponentially with the problem which is not ideal.
 
-The order of which A* expands the nodes in graph looks like this: A, E, D, F, C.
+The main advantage with DFS compared to BFS is that it can be highly space efficient.
+By not tracking any visited nodes it is able to use very little memory but that might cause infinite loops.
+By tracking visited nodes we prevent infinite loops but we lose that space effiency.
 
 \section*{Look at all the offline search algorithms presented in chapter 3 plus A* search. Are they complete? Are they optimal? Explain why!}
 
@@ -100,7 +103,10 @@ It could be both optimal and complete but it depends on h(n). To be optimal if i
 If we for example uses the straight line distance as the heuristic it will never overestimate the distance and therefore the algorithm will be optimal. 
 
 \textbf{Breadth-first}\\
-It is complete because all nodes will be visited in the end. It is guranteed optimal only if the step cost is the same since it will return the goal node
+It is complete because all nodes will beto the goal node with minimal cost. It might take longer time than A* because it doesn't consider which direction
+it is going. As long as the edge cost is positive we believe that it is also complete. 
+
+ visited in the end. It is guranteed optimal only if the step cost is the same since it will return the goal node
 with fewest steps from the start.
 
 \textbf{Uniform-cost searc}\\
