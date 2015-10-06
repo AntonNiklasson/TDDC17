@@ -5,21 +5,14 @@ public class StateAndReward {
 	
 	/* State discretization function for the angle controller */
 	public static String getStateAngle(double angle, double vx, double vy) {
-		String state = Integer.toString(discretize(angle, number_anglestates, -Math.PI, Math.PI));
+		String state = "A:" + Integer.toString(discretize(angle, number_anglestates, -Math.PI, Math.PI));
 		
 		return state;
 	}
 
 	/* Reward function for the angle controller */
 	public static double getRewardAngle(double angle, double vx, double vy) {
-		double reward = 0;
-		double max = 100;
-		
-		reward = max - Math.abs(angle);
-		
-		System.out.println("Angle reward: " + reward);
-
-		return reward;
+		return 20 * (Math.PI - Math.abs(angle));
 	}
 
 	/* State discretization function for the full hover controller */

@@ -1,5 +1,6 @@
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
+import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.Locale;
 import java.util.Random;
@@ -85,21 +86,10 @@ public class QLearningController extends Controller {
 	/* Performs the chosen action */
 	void performAction(int action) {
 
-		/* Fire zeh rockets! */
-		/* TODO: Remember to change NUM_ACTIONS constant to reflect the number of actions (including 0, no action) */
-		
-		/* TODO: IMPLEMENT THIS FUNCTION */
-		resetRockets();
-		
-		int state = Integer.parseInt(StateAndReward.getStateAngle(angle.getValue(), vx.getValue(), vy.getValue()));
-		
-		if(state == StateAndReward.goal_anglestate) {
-			middleEngine.setBursting(true);
-		}
-		
-		System.out.println();
-		System.out.println("Angle: " + angle.getValue());
-		System.out.println("StateAngle: " + state);
+		// Bitwise comparisons.
+		leftEngine.setBursting((action & 4) == 4);
+		middleEngine.setBursting((action & 2) == 2);
+		rightEngine.setBursting((action & 1) == 1);
 	}
 
 	/* Main decision loop. Called every iteration by the simulator */
@@ -135,8 +125,9 @@ public class QLearningController extends Controller {
 
 				
 				/* TODO: IMPLEMENT Q-UPDATE HERE! */
-				
-				/* See top for constants and below for helper functions */
+				double qValue = Qtable.get(prev_stateaction);
+				double qValueUpdated = qValue + alpha(Ntable.get(prev_stateaction)) * (previous_reward + GAMMA_DISCOUNT_FACTOR * getMaxActionQValue(prev_stateaction) - qValue); 
+				Qtable.put(prev_stateaction, qValueUpdated);
 				
 				
 				int action = selectAction(new_state); /* Make sure you understand how it selects an action */
