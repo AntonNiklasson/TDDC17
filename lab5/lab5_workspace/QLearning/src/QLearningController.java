@@ -137,10 +137,11 @@ public class QLearningController extends Controller {
 				/* Only print every 10th line to reduce spam */
 				print_counter++;
 				if (print_counter % 10 == 0) {
-					System.out.println("ITERATION: " + iteration + " SENSORS: a=" + df.format(angle.getValue()) + " vx=" + df.format(vx.getValue()) + 
-							" vy=" + df.format(vy.getValue()) + " P_STATE: " + previous_state + " P_ACTION: " + previous_action + 
-							" P_REWARD: " + df.format(previous_reward) + " P_QVAL: " + df.format(Qtable.get(prev_stateaction)) + " Tested: "
-							+ Ntable.get(prev_stateaction) + " times.");
+//					System.out.println("ITERATION: " + iteration + " SENSORS: a=" + df.format(angle.getValue()) + " vx=" + df.format(vx.getValue()) + 
+//							" vy=" + df.format(vy.getValue()) + " P_STATE: " + previous_state + " P_ACTION: " + previous_action + 
+//							" P_REWARD: " + df.format(previous_reward) + " P_QVAL: " + df.format(Qtable.get(prev_stateaction)) + " Tested: "
+//							+ Ntable.get(prev_stateaction) + " times.");
+					System.out.println("y = " + y.getValue() + " vy = " + vy.getValue());
 				}
 				
 				previous_vy = vy.getValue();

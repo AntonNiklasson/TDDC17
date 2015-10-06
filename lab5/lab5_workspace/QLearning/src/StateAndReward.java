@@ -1,18 +1,18 @@
 public class StateAndReward {
 
-	static int number_anglestates = 9;
-	static int goal_anglestate = 4;
+	static int number_anglestates = 19;
+	static int goal_anglestate = 10;
 	
 	/* State discretization function for the angle controller */
 	public static String getStateAngle(double angle, double vx, double vy) {
-		String state = "A:" + Integer.toString(discretize(angle, number_anglestates, -Math.PI, Math.PI));
+		String state = "A:" + Integer.toString(discretize(angle, number_anglestates, -Math.PI / 2, Math.PI / 2));
 		
 		return state;
 	}
 
 	/* Reward function for the angle controller */
 	public static double getRewardAngle(double angle, double vx, double vy) {
-		return 20 * (Math.PI - Math.abs(angle));
+		return 10 * (Math.PI - Math.abs(angle));
 	}
 
 	/* State discretization function for the full hover controller */
