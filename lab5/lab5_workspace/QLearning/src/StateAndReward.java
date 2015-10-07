@@ -12,27 +12,28 @@ public class StateAndReward {
 
 	/* Reward function for the angle controller */
 	public static double getRewardAngle(double angle, double vx, double vy) {
-		return 10 * (Math.PI - Math.abs(angle));
+		return (20 / Math.PI) * (Math.PI - Math.abs(angle));
 	}
 
 	/* State discretization function for the full hover controller */
 	public static String getStateHover(double angle, double vx, double vy) {
-
-		/* TODO: IMPLEMENT THIS FUNCTION */
-
-		String state = "OneStateToRuleThemAll2";
+		int discreetAngle = discretize(angle, number_anglestates, -Math.PI / 2, Math.PI / 2);
+		int discreetVelocityX = discretize(vx, 5, 0, 20);
+		int discreetVelocityY = discretize(vy, 10, 0, 20);
+		
+		String state = "A:" + Integer.toString(discreetAngle) + "VX:" + Integer.toString(discreetVelocityX) + "VY:" + Integer.toString(discreetVelocityY);
 		
 		return state;
 	}
 
 	/* Reward function for the full hover controller */
 	public static double getRewardHover(double angle, double vx, double vy) {
-
-		/* TODO: IMPLEMENT THIS FUNCTION */
+		double angleReward = getRewardAngle(angle, vx, vy);
+		double velocityReward = 20 - Math.abs(vx) - Math.abs(vy);
 		
-		double reward = 0;
-
-		return reward;
+		if(velocityReward < 0) velocityReward = 0;
+		
+		return angleReward + velocityReward;
 	}
 
 	// ///////////////////////////////////////////////////////////
