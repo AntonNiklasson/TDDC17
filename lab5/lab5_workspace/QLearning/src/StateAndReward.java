@@ -1,25 +1,30 @@
 public class StateAndReward {
-
-	static int number_anglestates = 19;
-	static int goal_anglestate = 10;
+	
+	static int ANGLE_RESOLUTION = 7;
+	static int VX_RESOLUTION = 2;
+	static int VY_RESOLUTION = 4;
 	
 	/* State discretization function for the angle controller */
 	public static String getStateAngle(double angle, double vx, double vy) {
-		String state = "A:" + Integer.toString(discretize(angle, number_anglestates, -Math.PI / 2, Math.PI / 2));
+		String state = "A:" + Integer.toString(angleDiscreetState(angle));
 		
 		return state;
 	}
 
 	/* Reward function for the angle controller */
 	public static double getRewardAngle(double angle, double vx, double vy) {
-		return (20 / Math.PI) * (Math.PI - Math.abs(angle));
+		double reward = 40 - 2 * Math.abs(angle);
+		
+		if(reward < 0) reward = 0;
+		
+		return reward;
 	}
 
 	/* State discretization function for the full hover controller */
 	public static String getStateHover(double angle, double vx, double vy) {
-		int discreetAngle = discretize(angle, number_anglestates, -Math.PI / 2, Math.PI / 2);
-		int discreetVelocityX = discretize(vx, 5, 0, 20);
-		int discreetVelocityY = discretize(vy, 10, 0, 20);
+		int discreetAngle = angleDiscreetState(angle);
+		int discreetVelocityX = vxDiscreetState(vx);
+		int discreetVelocityY = vyDiscreetState(vy);
 		
 		String state = "A:" + Integer.toString(discreetAngle) + "VX:" + Integer.toString(discreetVelocityX) + "VY:" + Integer.toString(discreetVelocityY);
 		
@@ -35,6 +40,18 @@ public class StateAndReward {
 		
 		return angleReward + velocityReward;
 	}
+	
+	public static int angleDiscreetState(double angle) {
+		return discretize(angle, ANGLE_RESOLUTION, -Math.PI, Math.PI);
+	}
+	
+	public static int vxDiscreetState(double vx) {
+		return discretize(vx, VX_RESOLUTION, 0, 8);
+	}
+	
+	public static int vyDiscreetState(double vy) {
+		return discretize(vy, VY_RESOLUTION, 0, 8);
+	}
 
 	// ///////////////////////////////////////////////////////////
 	// discretize() performs a uniform discretization of the
@@ -42,8 +59,7 @@ public class StateAndReward {
 	// It returns an integer between 0 and nrValues-1.
 	// The min and max parameters are used to specify the interval
 	// for the discretization.
-	// If the value is lower than min, 0 is retu
-	/* TODO: IMPLEMENT THIS FUNCTION */
+	// If the value is lower than min, 0 is returned.
 	// If the value is higher than min, nrValues-1 is returned
 	// otherwise a value between 1 and nrValues-2 is returned.
 	//

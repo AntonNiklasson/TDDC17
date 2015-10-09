@@ -85,7 +85,6 @@ public class QLearningController extends Controller {
 
 	/* Performs the chosen action */
 	void performAction(int action) {
-
 		// Bitwise comparisons.
 		leftEngine.setBursting((action & 4) == 4);
 		middleEngine.setBursting((action & 2) == 2);
