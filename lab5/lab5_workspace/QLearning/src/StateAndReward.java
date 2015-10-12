@@ -1,18 +1,18 @@
 public class StateAndReward {
 	
 	static int ANGLE_RESOLUTION = 7;
-	static double ANGLE_MIN = -1.5;
-	static double ANGLE_MAX = 1.5;
+	static double ANGLE_MIN = -1;
+	static double ANGLE_MAX = 1;
 	
 	static int VX_RESOLUTION = 3;
-	static int VX_GOAL = 1; // 0 1 2
+	static int VX_GOAL = 1;
 	static double VX_MIN = -3;
 	static double VX_MAX = 3;
 	
 	static int VY_RESOLUTION = 11;
 	static int VY_GOAL = 6;
-	static double VY_MIN = -8;
-	static double VY_MAX = 8;
+	static double VY_MIN = -6;
+	static double VY_MAX = 6;
 	
 	/* State discretization function for the angle controller */
 	public static String getStateAngle(double angle, double vx, double vy) {
@@ -30,7 +30,7 @@ public class StateAndReward {
 		
 		switch(states_from_goal_state) {
 			case 0:
-				reward = 50;
+				reward = 20;
 				break;
 			case 1:
 				reward = 5;
@@ -69,7 +69,7 @@ public class StateAndReward {
 		
 		switch(states_from_goal) {
 			case 0:
-				reward = 2;
+				reward = 10;
 				break;
 			case 1:
 				reward = 0;
@@ -89,16 +89,16 @@ public class StateAndReward {
 		
 		switch(states_from_goal) {
 			case 0:
-				reward = 40;
-				break;
-			case 1:
-				reward = 20;
-				break;
-			case 2:
 				reward = 10;
 				break;
+			case 1:
+				reward = 5;
+				break;
+			case 2:
+				reward = 3;
+				break;
 			case 3:
-				reward = 2;
+				reward = 1;
 			default: break;
 		}
 		

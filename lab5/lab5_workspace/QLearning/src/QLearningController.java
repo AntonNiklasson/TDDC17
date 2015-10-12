@@ -5,11 +5,6 @@ import java.util.Hashtable;
 import java.util.Locale;
 import java.util.Random;
 
-/* TODO: 
- * -Define state and reward functions (StateAndReward.java) suitable for your problem 
- * -Define actions
- * -Implement missing parts of Q-learning
- * -Tune state and reward function, and parameters below if the result is not satisfactory */
 
 public class QLearningController extends Controller {
 	
@@ -25,7 +20,11 @@ public class QLearningController extends Controller {
 	RocketEngine middleEngine;
 	RocketEngine rightEngine;
 
-	final static int NUM_ACTIONS = 7; /* The takeAction function must be changed if this is modified */
+	final static int NUM_ACTIONS = 4; /* The takeAction function must be changed if this is modified */
+	final static int ACTION_MIDDLE = 0;
+	final static int ACTION_LEFT = 1;
+	final static int ACTION_RIGHT = 2;
+	final static int ACTION_NONE = 3;
 	
 	/* Keep track of the previous state and action */
 	String previous_state = null;
@@ -41,7 +40,7 @@ public class QLearningController extends Controller {
 	/* PARAMETERS OF THE LEARNING ALGORITHM - THESE MAY BE TUNED BUT THE DEFAULT VALUES OFTEN WORK REASONABLY WELL  */
 	static final double GAMMA_DISCOUNT_FACTOR = 0.95; /* Must be < 1, small values make it very greedy */
 	static final double LEARNING_RATE_CONSTANT = 10; /* See alpha(), lower values are good for quick results in large and deterministic state spaces */
-	double explore_chance = 0.5; /* The exploration chance during the exploration phase */
+	double EXPLORE_CHANCE = 0.5; /* The exploration chance during the exploration phase */
 	final static int REPEAT_ACTION_MAX = 30; /* Repeat selected action at most this many times trying reach a new state, without a max it could loop forever if the action cannot lead to a new state */
 
 	/* Some internal counters */
@@ -85,10 +84,23 @@ public class QLearningController extends Controller {
 
 	/* Performs the chosen action */
 	void performAction(int action) {
-		// Bitwise comparisons.
-		leftEngine.setBursting((action & 4) == 4);
-		middleEngine.setBursting((action & 2) == 2);
-		rightEngine.setBursting((action & 1) == 1);
+		middleEngine.setBursting(false);
+		rightEngine.setBursting(false);
+		leftEngine.setBursting(false);
+		
+		switch(action) {
+			case ACTION_MIDDLE:
+				middleEngine.setBursting(true);
+				break;
+			case ACTION_RIGHT:
+				rightEngine.setBursting(true);
+				break;
+			case ACTION_LEFT:
+				leftEngine.setBursting(true);
+				break;
+			case ACTION_NONE:
+				break;
+		}
 	}
 
 	/* Main decision loop. Called every iteration by the simulator */
@@ -125,7 +137,7 @@ public class QLearningController extends Controller {
 
 				/* TODO: IMPLEMENT Q-UPDATE HERE */
 				double qValue = Qtable.get(prev_stateaction);
-				double qValueUpdated = qValue + alpha(Ntable.get(prev_stateaction)) * (previous_reward + GAMMA_DISCOUNT_FACTOR * getMaxActionQValue(prev_stateaction) - qValue); 
+				double qValueUpdated = qValue + alpha(Ntable.get(prev_stateaction)) * (previous_reward + GAMMA_DISCOUNT_FACTOR * getMaxActionQValue(new_state) - qValue); 
 				Qtable.put(prev_stateaction, qValueUpdated);
 				
 				// Select an action, and perform that action.
@@ -186,10 +198,10 @@ public class QLearningController extends Controller {
 	/* Selects an action in a state based on the registered Q-values and the exploration chance */
 	public int selectAction(String state) {
 		Random rand = new Random();
-
 		int action = 0;
+		
 		/* May do exploratory move if in exploration mode */
-		if (explore && Math.abs(rand.nextDouble()) < explore_chance) {
+		if (explore && Math.abs(rand.nextDouble()) < EXPLORE_CHANCE) {
 			/* Taking random exploration action! */
 			action = Math.abs(rand. nextInt()) % NUM_ACTIONS;
 			return action;
@@ -197,12 +209,15 @@ public class QLearningController extends Controller {
 
 		/* Find action with highest Q-val (utility) in given state */
 		double maxQval = Double.NEGATIVE_INFINITY;
+		
 		for (int i = 0; i < NUM_ACTIONS; i++) {
 			String test_pair = state + i; /* Generate a state-action pair for all actions */
 			double Qval = 0;
+			
 			if (Qtable.get(test_pair) != null) {
 				Qval = Qtable.get(test_pair);
 			}
+			
 			if (Qval > maxQval) {
 				maxQval = Qval;
 				action = i;
