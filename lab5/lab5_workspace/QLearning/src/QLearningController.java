@@ -60,7 +60,7 @@ public class QLearningController extends Controller {
 
 	public void init() {
 		cso = (ComposedSpringObject) object;
-		x = (DoubleFeature) cso.getObjectById("x");double previous_reward = StateAndReward.getRewardAngle(previous_angle, previous_vx, previous_vy);
+		x = (DoubleFeature) cso.getObjectById("x");
 		y = (DoubleFeature) cso.getObjectById("y");
 		vx = (DoubleFeature) cso.getObjectById("vx");
 		vy = (DoubleFeature) cso.getObjectById("vy");

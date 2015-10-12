@@ -1,8 +1,18 @@
 public class StateAndReward {
 	
 	static int ANGLE_RESOLUTION = 7;
-	static int VX_RESOLUTION = 2;
-	static int VY_RESOLUTION = 4;
+	static double ANGLE_MIN = -1.5;
+	static double ANGLE_MAX = 1.5;
+	
+	static int VX_RESOLUTION = 3;
+	static int VX_GOAL = 1; // 0 1 2
+	static double VX_MIN = -3;
+	static double VX_MAX = 3;
+	
+	static int VY_RESOLUTION = 11;
+	static int VY_GOAL = 6;
+	static double VY_MIN = -8;
+	static double VY_MAX = 8;
 	
 	/* State discretization function for the angle controller */
 	public static String getStateAngle(double angle, double vx, double vy) {
@@ -13,20 +23,30 @@ public class StateAndReward {
 
 	/* Reward function for the angle controller */
 	public static double getRewardAngle(double angle, double vx, double vy) {
-		double reward = 40 - 2 * Math.abs(angle);
+		int states_from_goal_state = Math.abs(angleDiscreetState(angle) - ((ANGLE_RESOLUTION - 1) / 2));
+		double reward = 0;
 		
-		if(reward < 0) reward = 0;
+//		System.out.println("Angle states from goal: " + states_from_goal_state);
+		
+		switch(states_from_goal_state) {
+			case 0:
+				reward = 50;
+				break;
+			case 1:
+				reward = 5;
+				break;
+			case 2:
+				reward = 2;
+				break;
+			default: break;
+		}
 		
 		return reward;
 	}
 
 	/* State discretization function for the full hover controller */
 	public static String getStateHover(double angle, double vx, double vy) {
-		int discreetAngle = angleDiscreetState(angle);
-		int discreetVelocityX = vxDiscreetState(vx);
-		int discreetVelocityY = vyDiscreetState(vy);
-		
-		String state = "A:" + Integer.toString(discreetAngle) + "VX:" + Integer.toString(discreetVelocityX) + "VY:" + Integer.toString(discreetVelocityY);
+		String state = "A:" + angleDiscreetState(angle) + "VX:" + vxDiscreetState(vx) + "VY:" + vyDiscreetState(vy);
 		
 		return state;
 	}
@@ -34,23 +54,67 @@ public class StateAndReward {
 	/* Reward function for the full hover controller */
 	public static double getRewardHover(double angle, double vx, double vy) {
 		double angleReward = getRewardAngle(angle, vx, vy);
-		double velocityReward = 20 - Math.abs(vx) - Math.abs(vy);
+		double vxReward = getVXReward(vx);
+		double vyReward = getVYReward(vy);
 		
-		if(velocityReward < 0) velocityReward = 0;
+		return angleReward + vxReward + vyReward;
+	}
+	
+	public static double getVXReward(double vx) {
+		double reward = 0;
+		int states_from_goal = Math.abs(vxDiscreetState(vx) - VX_GOAL);
 		
-		return angleReward + velocityReward;
+//		System.out.println("VX states from goal: " + states_from_goal);
+//		System.out.println("VX: " + vx);
+		
+		switch(states_from_goal) {
+			case 0:
+				reward = 2;
+				break;
+			case 1:
+				reward = 0;
+				break;
+			default: break;
+		}
+		
+		return reward;
+	}
+	
+	public static double getVYReward(double vy) {
+		double reward = 0;
+		int states_from_goal = Math.abs(vyDiscreetState(vy) - VY_GOAL); 
+		
+//		System.out.println("VY states from goal: " + states_from_goal);
+//		System.out.println("VY = " + vy);
+		
+		switch(states_from_goal) {
+			case 0:
+				reward = 40;
+				break;
+			case 1:
+				reward = 20;
+				break;
+			case 2:
+				reward = 10;
+				break;
+			case 3:
+				reward = 2;
+			default: break;
+		}
+		
+		return reward;
 	}
 	
 	public static int angleDiscreetState(double angle) {
-		return discretize(angle, ANGLE_RESOLUTION, -Math.PI, Math.PI);
+		return discretize(angle, ANGLE_RESOLUTION, ANGLE_MIN, ANGLE_MAX);
 	}
 	
 	public static int vxDiscreetState(double vx) {
-		return discretize(vx, VX_RESOLUTION, 0, 8);
+		return discretize(vx, VX_RESOLUTION, VX_MIN, VX_MAX);
 	}
 	
 	public static int vyDiscreetState(double vy) {
-		return discretize(vy, VY_RESOLUTION, 0, 8);
+		return discretize(vy, VY_RESOLUTION, VY_MIN, VY_MAX);
 	}
 
 	// ///////////////////////////////////////////////////////////
