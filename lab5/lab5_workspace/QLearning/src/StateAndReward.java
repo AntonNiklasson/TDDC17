@@ -1,16 +1,16 @@
 public class StateAndReward {
 	
-	static int ANGLE_RESOLUTION = 7;
-	static double ANGLE_MIN = -1;
-	static double ANGLE_MAX = 1;
+	static int ANGLE_RESOLUTION = 13;
+	static double ANGLE_MIN = -2;
+	static double ANGLE_MAX = 2;
 	
 	static int VX_RESOLUTION = 3;
 	static int VX_GOAL = 1;
 	static double VX_MIN = -3;
 	static double VX_MAX = 3;
 	
-	static int VY_RESOLUTION = 11;
-	static int VY_GOAL = 6;
+	static int VY_RESOLUTION = 7;
+	static int VY_GOAL = 4;
 	static double VY_MIN = -6;
 	static double VY_MAX = 6;
 	
@@ -30,13 +30,16 @@ public class StateAndReward {
 		
 		switch(states_from_goal_state) {
 			case 0:
-				reward = 20;
+				reward = 35;
 				break;
 			case 1:
-				reward = 5;
+				reward = 15;
 				break;
 			case 2:
-				reward = 2;
+				reward = 8;
+				break;
+			case 3:
+				reward = 1;
 				break;
 			default: break;
 		}
@@ -64,15 +67,12 @@ public class StateAndReward {
 		double reward = 0;
 		int states_from_goal = Math.abs(vxDiscreetState(vx) - VX_GOAL);
 		
-//		System.out.println("VX states from goal: " + states_from_goal);
-//		System.out.println("VX: " + vx);
-		
 		switch(states_from_goal) {
 			case 0:
 				reward = 10;
 				break;
 			case 1:
-				reward = 0;
+				reward = 3;
 				break;
 			default: break;
 		}
@@ -84,21 +84,16 @@ public class StateAndReward {
 		double reward = 0;
 		int states_from_goal = Math.abs(vyDiscreetState(vy) - VY_GOAL); 
 		
-//		System.out.println("VY states from goal: " + states_from_goal);
-//		System.out.println("VY = " + vy);
-		
 		switch(states_from_goal) {
 			case 0:
-				reward = 10;
+				reward = 20;
 				break;
 			case 1:
 				reward = 5;
 				break;
 			case 2:
-				reward = 3;
-				break;
-			case 3:
 				reward = 1;
+				break;
 			default: break;
 		}
 		
@@ -161,8 +156,7 @@ public class StateAndReward {
 	// If the value is higher than min, nrValues-1 is returned
 	// otherwise a value between 0 and nrValues-1 is returned.
 	// ///////////////////////////////////////////////////////////
-	public static int discretize2(double value, int nrValues, double min,
-			double max) {
+	public static int discretize2(double value, int nrValues, double min, double max) {
 		double diff = max - min;
 
 		if (value < min) {
